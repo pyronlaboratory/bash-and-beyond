@@ -1,0 +1,23 @@
+- name: Update system
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Install basic utilities
+  dnf:
+    name:
+      - git
+      - unzip
+      - vim
+    state: present
+
+- name: Install fail2ban
+  dnf:
+    name: fail2ban
+    state: present
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    state: started
+    enabled: true

@@ -1,0 +1,26 @@
+---
+# setup.yml - Main Ansible Playbook
+# Usage:
+#   ansible-playbook setup.yml                    # Run all roles
+#   ansible-playbook setup.yml --tags "base"      # Run only base role
+#   ansible-playbook setup.yml --tags "nginx"     # Run only nginx role
+#   ansible-playbook setup.yml --tags "app"       # Run only app role
+#   ansible-playbook setup.yml --tags "ssh"       # Run only ssh role
+ 
+- name: Configure Linux Server
+  hosts: webservers
+  become: true
+  gather_facts: true
+ 
+  roles:
+    - role: base
+      tags: ["base"]
+ 
+    - role: ssh
+      tags: ["ssh"]
+ 
+    - role: nginx
+      tags: ["nginx"]
+ 
+    - role: app
+      tags: ["app"]

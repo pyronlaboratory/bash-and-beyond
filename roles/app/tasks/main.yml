@@ -1,0 +1,10 @@
+- name: Copy website tarball
+  copy:
+    src: files/site.tar.gz
+    dest: /tmp/site.tar.gz
+
+- name: Extract website
+  unarchive:
+    src: /tmp/site.tar.gz
+    dest: /usr/share/nginx/html/
+    remote_src: yes
