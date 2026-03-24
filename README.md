@@ -1,112 +1,128 @@
-# ship-it-static
-Lightweight static site deployment using Nginx and rsync.
+# No Hands, Just Playbooks
 
-Project: https://roadmap.sh/projects/static-site-server
+This project demonstrates basic configuration management using Ansible by provisioning and configuring a Linux server with modular roles.
+Project: [https://roadmap.sh/projects/static-site-server](https://roadmap.sh/projects/configuration-management)
 
 ## Overview
 
-This project demonstrates how to provision a remote Linux server, configure Nginx to serve a static website, and deploy updates using `rsync`.
+The playbook configures and automates an Amazon Linux 2023 EC2 instance (or any RHEL-family Linux) with nginx, fail2ban, SSH key management, and a static app deployment.
 
+- Base system configuration (packages, updates, fail2ban)
+- SSH key configuration
+- Nginx installation and service setup
+- Deployment of a static website
+  
 ---
 
-## Requirements
+## Project Structure
 
-- Remote Linux server (AWS EC2 / DigitalOcean / any provider)
-- SSH access to the server
-- Nginx installed and configured
-- Static website (HTML, CSS, assets)
-- Rsync for deployment
-
----
-
-## Amazon EC2 Server Setup
-
-### 1. Launch Instance
-- Create an EC2 instance (Amazon Linux 2023 recommended)
-- Download `.pem` key file
-- Allow inbound rules:
-  - SSH (22)
-  - HTTP (80)
-
-### 2. Connect via SSH
-```bash
-ssh -i <private-keypair.pem> <username>@<server-ip>
+```
+ansible-setup/
+├── ansible.cfg              # Ansible settings
+├── inventory.ini            # Your server(s)
+├── setup.yml                # Main playbook
+├── group_vars/
+│   └── all.yml              # Shared variables
+└── roles/
+    ├── base/                # Updates, utilities, fail2ban, firewall hardening
+    ├── ssh/                 # Adds a public key to authorized_keys
+    ├── nginx/               # Installs + configures nginx
+    └── app/                 # Deploys static site (tarball or git)
 ```
 
 ---
 
-## Install and Configure Nginx
-
-### 1. Install Nginx
-```bash
-sudo dnf update -y
-sudo dnf install -y nginx
-```
-### 2. Start and Enable Service
-```bash
-sudo systemctl start nginx
-sudo systemctl enable nginx
-```
-### 3. Verify Installation
-```bash
-sudo systemctl status nginx
-```
-
----
-
-## Rsync Deployment
-
-### Deploy Script (`deploy.sh`)
+## Prerequisites
 
 ```bash
-#!/bin/bash
-
-rsync -avz -e "ssh -i <private-keypair.pem>" /path/to/local/static.zip <username>@<server-ip>:~
+brew install ansible
+```
+or using pip,
+```
+pip install ansible
 ```
 
-### Configuration
+## Inventory
 
-Replace the placeholders below with your own values:
+Edit `inventory.ini` and replace the host with your server’s public IP address or DNS name. Update the SSH user and private key path based on your environment:
 
-- `<private-keypair.pem>`: Path to your SSH private key
-- `/path/to/local/static.zip`: Path to your local static site archive
-- `<username>`: Remote server user (e.g., ec2-user)
-- `<server-ip>`: Public IP address or domain of your server
+```
+[webservers]
+<your-server-ip-or-domain>
 
-### Usage
+[webservers:vars]
+ansible_user=<your-username>
+ansible_ssh_private_key_file=<path/to/your-private-key.pem>
+```
 
-Make script executable:
+## Adding an SSH Key
+
+This project expects a public key at:
+
 ```bash
-chmod +x deploy.sh
+roles/ssh/files/id_rsa.pub
 ```
 
-Run deployment:
+If you only have a private key (such as a `.pem` file), you can derive the corresponding public key:
+
 ```bash
-./deploy.sh
+ssh-keygen -y -f /path/to/your-private-key.pem > roles/ssh/files/id_rsa.pub
 ```
 
----
+Ensure correct permissions:
 
-## Configure Static Site
-
-### 1. Extract Files on Server
 ```bash
-mkdir source
-unzip static.zip -d source/
+chmod 600 /path/to/your-key.pem
 ```
 
-### 2. Move Files to Web Directory
-```bash
-sudo rm -rf /usr/share/nginx/html/*
-sudo cp -r source/* /usr/share/nginx/html/
+## Running the Playbook
+```
+# Run all roles
+ansible-playbook setup.yml
+
+# Run a specific role by tag
+ansible-playbook setup.yml --tags "base"
+ansible-playbook setup.yml --tags "ssh"
+ansible-playbook setup.yml --tags "nginx"
+ansible-playbook setup.yml --tags "app"
+
+# Combine tags
+ansible-playbook setup.yml --tags "base,nginx"
+
+# Dry run (check mode)
+ansible-playbook setup.yml --check
 ```
 
-### 3. Restart Nginx
+## Deploying the App
+
+### Option 1 — Tarball (local tarball deployment)
+
+Place your `site.tar.gz` in `roles/app/files/` then run:
+
 ```bash
-sudo systemctl restart nginx
+ansible-playbook setup.yml --tags "app"
 ```
 
-### 4. Access Website
+A sample `site.tar.gz` is included in this repository for convenience.  
+The contents are based on: [TheAviator2](https://github.com/Badestrand/TheAviator2)
+
+
+### Option 2 — Git repo (git-based deployment)
+
 ```bash
-http://your-server-ip
+ansible-playbook setup.yml --tags "app" \
+  --extra-vars "app_repo_url=https://github.com/you/your-static-site"
 ```
+
+## Key Variables (group_vars/all.yml)
+
+
+| Variable | Default | Description | 
+| -------- | ------- | ----------- |
+| `app_tarball_src` | `files/site.tar.gz` | Local tarball path |
+| `app_deploy_dir` | `/usr/share/nginx/html` | Server deploy path | 
+| `app_repo_url` | `""` | Git repo URL (enables git deploy) | 
+| `nginx_server_name` | `_` | Nginx `server_name` (your domain) | 
+| `fail2ban_maxretry` | `5` | Failed attempts before ban | 
+| `fail2ban_bantime` | `3600` | Ban duration in seconds |
+| `fail2ban_findtime` | `600` | Time window for retries |
