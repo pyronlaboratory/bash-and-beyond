@@ -1,10 +1,88 @@
-- name: Copy website tarball
-  copy:
-    src: files/site.tar.gz
-    dest: /tmp/site.tar.gz
+---
+# roles/app/tasks/main.yml
+# Supports two deploy methods:
+#   1. Tarball upload (default)  — set app_tarball_src
+#   2. Git clone (stretch goal)  — set app_repo_url
 
-- name: Extract website
-  unarchive:
-    src: /tmp/site.tar.gz
-    dest: /usr/share/nginx/html/
-    remote_src: yes
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ app_deploy_dir }}"
+    state: directory
+    owner: nginx
+    group: nginx
+    mode: "0755"
+  tags: ["app"]
+
+# ── Method 1: Tarball deploy ──────────────────────────────────────────────────
+- name: "[tarball] Copy app tarball to server"
+  ansible.builtin.copy:
+    src: "{{ app_tarball_src }}"
+    dest: "/tmp/site.tar.gz"
+    mode: "0644"
+  when: app_repo_url | length == 0
+  tags: ["app"]
+
+- name: "[tarball] Extract app tarball into deploy directory"
+  ansible.builtin.unarchive:
+    src: "/tmp/site.tar.gz"
+    dest: "{{ app_deploy_dir }}"
+    remote_src: true
+    owner: nginx
+    group: nginx
+    extra_opts: ["--strip-components=1"]  # flatten top-level folder if present
+  when: app_repo_url | length == 0 and not ansible_check_mode
+  notify: Reload nginx
+  tags: ["app"]
+
+- name: "[tarball] Remove temp tarball"
+  ansible.builtin.file:
+    path: /tmp/site.tar.gz
+    state: absent
+  when: app_repo_url | length == 0
+  tags: ["app"]
+
+# ── Method 2: Git deploy (stretch goal) ───────────────────────────────────────
+- name: "[git] Install git"
+  ansible.builtin.dnf:
+    name: git
+    state: present
+  when: app_repo_url | length > 0
+  tags: ["app"]
+
+- name: "[git] Clone / pull repository"
+  ansible.builtin.git:
+    repo: "{{ app_repo_url }}"
+    dest: "{{ app_deploy_dir }}"
+    version: "{{ app_repo_branch }}"
+    force: true
+  when: app_repo_url | length > 0
+  notify: Reload nginx
+  tags: ["app"]
+
+- name: "[git] Set correct ownership on deployed files"
+  ansible.builtin.file:
+    path: "{{ app_deploy_dir }}"
+    owner: nginx
+    group: nginx
+    recurse: true
+  when: app_repo_url | length > 0
+  tags: ["app"]
+
+# ── Verification ──────────────────────────────────────────────────────────────
+- name: Check that index.html exists
+  ansible.builtin.stat:
+    path: "{{ app_deploy_dir }}/index.html"
+  register: index_file
+  tags: ["app"]
+
+- name: Confirm deployment success
+  ansible.builtin.debug:
+    msg: "✅ App deployed — index.html found at {{ app_deploy_dir }}/index.html"
+  when: index_file.stat.exists
+  tags: ["app"]
+
+- name: Warn if index.html is missing
+  ansible.builtin.debug:
+    msg: "⚠️  index.html not found in {{ app_deploy_dir }} — check your tarball or repo structure."
+  when: not index_file.stat.exists
+  tags: ["app"]
