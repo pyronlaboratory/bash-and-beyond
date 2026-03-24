@@ -1,0 +1,27 @@
+# /etc/nginx/conf.d/app.conf
+# Managed by Ansible — do not edit manually
+
+server {
+    listen {{ nginx_port }};
+    server_name {{ nginx_server_name }};
+
+    root {{ nginx_root }};
+    index index.html index.htm;
+
+    access_log /var/log/nginx/app_access.log;
+    error_log  /var/log/nginx/app_error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+}
