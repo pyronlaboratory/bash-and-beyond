@@ -1,7 +1,7 @@
 # No Hands, Just Playbooks
 
 This project demonstrates basic configuration management using Ansible by provisioning and configuring a Linux server with modular roles.
-Project: [https://roadmap.sh/projects/static-site-server](https://roadmap.sh/projects/configuration-management)
+Project: [https://roadmap.sh/projects/configuration-management](https://roadmap.sh/projects/configuration-management)
 
 ## Overview
 
