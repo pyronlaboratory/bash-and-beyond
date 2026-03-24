@@ -1,0 +1,8 @@
+---
+# roles/app/defaults/main.yml
+# Override these in group_vars/all.yml or via --extra-vars
+
+app_tarball_src: "files/site.tar.gz"
+app_deploy_dir: "/usr/share/nginx/html"
+app_repo_url: ""
+app_repo_branch: "main"
