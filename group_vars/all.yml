@@ -1,0 +1,23 @@
+---
+# group_vars/all.yml
+# Shared variables across all roles
+
+# SSH
+ssh_public_key: ""  # Set via --extra-vars or replace inline
+                    # e.g.: ansible-playbook setup.yml --extra-vars "ssh_public_key='ssh-rsa AAAA...'"
+
+# App deployment
+app_tarball_src: "files/site.tar.gz"      # Local path to tarball
+app_deploy_dir: "/usr/share/nginx/html"  # Where to extract on server
+app_repo_url: ""                         # GitHub repo URL
+app_repo_branch: "main"                  # Branch to deploy
+
+# Nginx
+nginx_server_name: "_"                   # Default: catch-all; replace with your domain
+nginx_root: "/usr/share/nginx/html"
+nginx_port: 80
+
+# Fail2ban
+fail2ban_maxretry: 5
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
