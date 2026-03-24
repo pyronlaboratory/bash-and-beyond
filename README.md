@@ -1,7 +1,6 @@
-# ship-it-static
-Lightweight static site deployment using Nginx and rsync.
+# Ship It, Static!
 
-Project: https://roadmap.sh/projects/static-site-server
+Lightweight static site deployment using Nginx and rsync. Project: https://roadmap.sh/projects/static-site-server
 
 ## Overview
 
