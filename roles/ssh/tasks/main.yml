@@ -1,4 +1,35 @@
-- name: Add SSH public key
-  authorized_key:
+---
+# roles/ssh/tasks/main.yml
+# Adds a public key to the ec2-user's authorized_keys
+
+- name: Ensure .ssh directory exists for ec2-user
+  ansible.builtin.file:
+    path: /home/ec2-user/.ssh
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: "0700"
+  tags: ["ssh"]
+
+- name: Check if public key file exists
+  ansible.builtin.stat:
+    path: roles/ssh/files/id_rsa.pub
+  register: pubkey_file
+  delegate_to: localhost
+  become: false
+  run_once: true
+  tags: ["ssh"]
+
+- name: Warn if public key file is missing
+  ansible.builtin.debug:
+    msg: "WARNING: roles/ssh/files/id_rsa.pub not found. SSH key will not be added."
+  when: not pubkey_file.stat.exists
+  tags: ["ssh"]
+
+- name: Add public key to authorized_keys
+  ansible.posix.authorized_key:
     user: ec2-user
-    key: "{{ lookup('file', 'files/id_rsa.pub') }}"
+    state: present
+    key: "{{ lookup('file', 'roles/ssh/files/id_rsa.pub') }}"
+  when: pubkey_file.stat.exists
+  tags: ["ssh"]
