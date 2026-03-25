@@ -41,6 +41,9 @@ cp terraform.tfvars.example terraform.tfvars
 | `security_group_id` | Existing SG ID — ignored when `create_new_sg = true` |
 | `create_new_sg` | Set to `true` to provision a new security group |
 
+Before applying, update `outputs.tf` with your actual key path and name:
+> `"ssh -i ~/.ssh/<key>.pem ec2-user@..."`
+
 ## Usage
 
 ```bash
