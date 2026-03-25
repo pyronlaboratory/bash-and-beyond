@@ -1,0 +1,15 @@
+# ── Region & compute ──────────────────────────────────────────────────────────
+region        = "us-east-1"
+ami_id        = "<ami-id>"
+instance_type = "t3.micro"
+key_name      = "<key-pair-name>"
+
+# ── Network & security resources ──────────────────────────────────────────────
+vpc_id            = "<vpc-id>"
+subnet_id         = "<subnet-id>"
+security_group_id = "<sg-id>"
+create_new_sg     = false
+
+# ── Root volume snapshot (optional) ───────────────────────────────────────────
+# Restore from an existing snapshot. Remove to use a clean AMI volume.
+# snapshot_id = "<snapshot-id>"
