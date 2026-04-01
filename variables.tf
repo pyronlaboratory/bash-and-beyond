@@ -22,6 +22,10 @@ variable "create_new_sg" {
   default = false
 }
 
+variable "local_ip" {
+  description = "Your public IP address with /32"
+}
+
 variable "vpc_id" {
   description = "Existing VPC ID"
 }

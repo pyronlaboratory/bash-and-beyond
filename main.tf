@@ -21,7 +21,7 @@ resource "aws_security_group" "new_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["REPLACED_IP"]
+    cidr_blocks = [var.local_ip]
   }
   ingress {
     from_port   = 80
